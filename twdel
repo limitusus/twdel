@@ -1,0 +1,60 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use 5.010;
+
+use Carp;
+use Config::Pit;
+use Net::Twitter;
+use Data::Dumper;
+require "twdel_keys.conf";
+
+
+main();
+
+sub main {
+    my $start_page = 2;
+    my $end_page = 100;
+    say "Acquiring Net::Twitter object...";
+    my $nt = get_nt();
+    say "Acquired Net::Twitter object successfully";
+    for my $page ($start_page .. $end_page) {
+        say "Getting user timeline page #$page";
+        my $statuses = $nt->user_timeline({ page => $page });
+        for my $status (@{$statuses}) {
+            my $id = $status->{id};
+            say "Deleting status #$id";
+            $nt->destroy_status($id);
+        }
+    }
+
+}
+
+sub get_nt {
+    my $config = pit_get("twitter_twdel", get => {
+            access_token => "access_token",
+            access_token_secret => "access_token_secret",
+        });
+    if (!defined $config->{access_token} or !defined $config->{access_token_secret}) {
+        die "Authentication information is not set. Run authenticate first.";
+    }
+    no warnings;
+    $config->{consumer_key} = $_::consumer_key;
+    $config->{consumer_secret} = $_::consumer_secret;
+    use warnings;
+    #print Dumper([$config]);
+
+    my $nt = Net::Twitter->new(
+        traits => [qw/OAuth API::REST RateLimit/],
+        consumer_key => $config->{consumer_key},
+        consumer_secret => $config->{consumer_secret},
+        access_token => $config->{access_token},
+        access_token_secret => $config->{access_token_secret},
+    );
+    if (!defined $nt) {
+        die "Authentication Failed: $!";
+    }
+    return $nt;
+}
+

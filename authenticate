@@ -1,0 +1,34 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use 5.010;
+
+use Config::Pit;
+use Net::Twitter;
+require 'twdel_keys.conf';
+
+main();
+
+sub main {
+    no warnings;
+    my ($consumer_key, $consumer_secret) = ($_::consumer_key, $_::consumer_secret);
+    use warnings;
+    my $nt = Net::Twitter->new(
+        traits => [qw/OAuth API::REST/],
+        consumer_key => $consumer_key,
+        consumer_secret => $consumer_secret,
+    );
+    say "Authorize this app at ", $nt->get_authorization_url, " and enter the PIN#";
+    my $pin = <STDIN>; # wait for input
+    chomp $pin;
+
+    my($access_token, $access_token_secret, $user_id, $screen_name) = $nt->request_access_token(verifier => $pin);
+
+    pit_set("twitter_twdel", data => {
+            access_token => $access_token,
+            access_token_secret => $access_token_secret,
+        });
+    say "Configured OAuth access token and access token secret\n";
+};
+
