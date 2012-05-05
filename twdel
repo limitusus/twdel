@@ -19,8 +19,9 @@ sub main {
     say "Acquiring Net::Twitter object...";
     my $nt = get_nt();
     say "Acquired Net::Twitter object successfully";
+    say ratelimit($nt);
     for my $page ($start_page .. $end_page) {
-        say "Getting user timeline page #$page";
+        say "Getting user timeline page #$page " . ratelimit($nt);
         my $statuses = $nt->user_timeline({ page => $page });
         for my $status (@{$statuses}) {
             my $id = $status->{id};
@@ -29,6 +30,18 @@ sub main {
         }
     }
 
+}
+
+sub ratelimit {
+    my $nt = shift;
+    my $rest = $nt->rate_remaining;
+    my $limit = $nt->rate_limit;
+    my $next_epoch = $nt->rate_reset;
+    my ($sec,$min,$hour,$day,$month,$year,$wdy,$yday) = localtime($next_epoch);
+    $year += 1900;
+    $month++;
+    my $next_reset = sprintf "%04d/%02d/%02d %02d:%02d:%02d", $year, $month, $day, $hour, $min, $sec;
+    return "API $rest/$limit next reset at $next_reset";
 }
 
 sub get_nt {
