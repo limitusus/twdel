@@ -8,6 +8,8 @@ use Carp;
 use Config::Pit;
 use Net::Twitter;
 use Data::Dumper;
+use Getopt::Long;
+use Pod::Usage;
 require "twdel_keys.conf";
 
 
@@ -16,6 +18,13 @@ main();
 sub main {
     my $start_page = 2;
     my $end_page = 100;
+    my $help = 0;
+    my $options = GetOptions("start-page=i" => \$start_page,
+                             "end-page=i"   => \$end_page,
+                             "help"         => \$help);
+    if ($help) {
+        pod2usage(2);
+    }
     say "Acquiring Net::Twitter object...";
     my $nt = get_nt();
     say "Acquired Net::Twitter object successfully";
@@ -70,4 +79,36 @@ sub get_nt {
     }
     return $nt;
 }
+
+__END__
+
+=head1 Twdel
+
+Twdel - Twitter history remover -
+
+=head1 SYNOPSIS
+
+twdel [options]
+
+ Options:
+  -start-page           First page index of removal [2]
+  -end-page             Last page index of removel [100]
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-start-page>
+
+First page index of removal
+2 for default
+
+=item B<-end-page>
+
+Last page index of removal
+100 for default
+
+=back
+
+=cut
 
